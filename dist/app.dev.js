@@ -20,6 +20,17 @@ var promoRouter = require('./routes/promoRouter');
 
 var leaderRouter = require('./routes/leaderRouter');
 
+var mongoose = require('mongoose');
+
+var Dishes = require('./models/dishes');
+
+var url = 'mongodb://localhost:27017/conFusion';
+var connect = mongoose.connect(url);
+connect.then(function (db) {
+  console.log("Connected correctly to server");
+}, function (err) {
+  console.log(err);
+});
 var app = express(); // view engine setup
 
 app.set('views', path.join(__dirname, 'views'));
