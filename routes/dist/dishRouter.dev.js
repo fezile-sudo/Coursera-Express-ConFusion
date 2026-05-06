@@ -9,182 +9,152 @@ var mongoose = require('mongoose');
 var Dishes = require('../models/dishes');
 
 var dishRouter = express.Router();
-dishRouter.use(bodyParser.json()); // Routes for /dishes
-
-dishRouter.route('/').get(function _callee(req, res, next) {
-  var dishes;
-  return regeneratorRuntime.async(function _callee$(_context) {
-    while (1) {
-      switch (_context.prev = _context.next) {
-        case 0:
-          _context.prev = 0;
-          _context.next = 3;
-          return regeneratorRuntime.awrap(Dishes.find({}));
-
-        case 3:
-          dishes = _context.sent;
-          res.status(200).json(dishes);
-          _context.next = 10;
-          break;
-
-        case 7:
-          _context.prev = 7;
-          _context.t0 = _context["catch"](0);
-          next(_context.t0);
-
-        case 10:
-        case "end":
-          return _context.stop();
-      }
+dishRouter.use(bodyParser.json());
+dishRouter.route('/:dishId/comments').get(function (req, res, next) {
+  Dishes.findById(req.params.dishId).then(function (dish) {
+    if (dish != null) {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.json(dish.comments);
+    } else {
+      err = new Error('Dish ' + req.params.dishId + ' not found');
+      err.status = 404;
+      return next(err);
     }
-  }, null, null, [[0, 7]]);
-}).post(function _callee2(req, res, next) {
-  var dish;
-  return regeneratorRuntime.async(function _callee2$(_context2) {
-    while (1) {
-      switch (_context2.prev = _context2.next) {
-        case 0:
-          _context2.prev = 0;
-          _context2.next = 3;
-          return regeneratorRuntime.awrap(Dishes.create(req.body));
-
-        case 3:
-          dish = _context2.sent;
-          console.log('Dish Created', dish);
-          res.status(201).json(dish); // 201 Created
-
-          _context2.next = 11;
-          break;
-
-        case 8:
-          _context2.prev = 8;
-          _context2.t0 = _context2["catch"](0);
-          next(_context2.t0);
-
-        case 11:
-        case "end":
-          return _context2.stop();
-      }
+  }, function (err) {
+    return next(err);
+  })["catch"](function (err) {
+    return next(err);
+  });
+}).post(function (req, res, next) {
+  Dishes.findById(req.params.dishId).then(function (dish) {
+    if (dish != null) {
+      dish.comments.push(req.body);
+      dish.save().then(function (dish) {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(dish);
+      }, function (err) {
+        return next(err);
+      });
+    } else {
+      err = new Error('Dish ' + req.params.dishId + ' not found');
+      err.status = 404;
+      return next(err);
     }
-  }, null, null, [[0, 8]]);
-}).put(function (req, res) {
-  res.status(403).end('PUT operation not supported on /dishes');
-})["delete"](function _callee3(req, res, next) {
-  var resp;
-  return regeneratorRuntime.async(function _callee3$(_context3) {
-    while (1) {
-      switch (_context3.prev = _context3.next) {
-        case 0:
-          _context3.prev = 0;
-          _context3.next = 3;
-          return regeneratorRuntime.awrap(Dishes.deleteMany({}));
-
-        case 3:
-          resp = _context3.sent;
-          res.status(200).json(resp);
-          _context3.next = 10;
-          break;
-
-        case 7:
-          _context3.prev = 7;
-          _context3.t0 = _context3["catch"](0);
-          next(_context3.t0);
-
-        case 10:
-        case "end":
-          return _context3.stop();
+  }, function (err) {
+    return next(err);
+  })["catch"](function (err) {
+    return next(err);
+  });
+}).put(function (req, res, next) {
+  res.statusCode = 403;
+  res.end('PUT operation not supported on /dishes/' + req.params.dishId + '/comments');
+})["delete"](function (req, res, next) {
+  Dishes.findById(req.params.dishId).then(function (dish) {
+    if (dish != null) {
+      for (var i = dish.comments.length - 1; i >= 0; i--) {
+        dish.comments.id(dish.comments[i]._id).remove();
       }
+
+      dish.save().then(function (dish) {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(dish);
+      }, function (err) {
+        return next(err);
+      });
+    } else {
+      err = new Error('Dish ' + req.params.dishId + ' not found');
+      err.status = 404;
+      return next(err);
     }
-  }, null, null, [[0, 7]]);
-}); // Routes for /dishes/:dishId
-
-dishRouter.route('/:dishId').get(function _callee4(req, res, next) {
-  var dish;
-  return regeneratorRuntime.async(function _callee4$(_context4) {
-    while (1) {
-      switch (_context4.prev = _context4.next) {
-        case 0:
-          _context4.prev = 0;
-          _context4.next = 3;
-          return regeneratorRuntime.awrap(Dishes.findById(req.params.dishId));
-
-        case 3:
-          dish = _context4.sent;
-          res.status(200).json(dish);
-          _context4.next = 10;
-          break;
-
-        case 7:
-          _context4.prev = 7;
-          _context4.t0 = _context4["catch"](0);
-          next(_context4.t0);
-
-        case 10:
-        case "end":
-          return _context4.stop();
+  }, function (err) {
+    return next(err);
+  })["catch"](function (err) {
+    return next(err);
+  });
+});
+dishRouter.route('/:dishId/comments/:commentId').get(function (req, res, next) {
+  Dishes.findById(req.params.dishId).then(function (dish) {
+    if (dish != null && dish.comments.id(req.params.commentId) != null) {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.json(dish.comments.id(req.params.commentId));
+    } else if (dish == null) {
+      err = new Error('Dish ' + req.params.dishId + ' not found');
+      err.status = 404;
+      return next(err);
+    } else {
+      err = new Error('Comment ' + req.params.commentId + ' not found');
+      err.status = 404;
+      return next(err);
+    }
+  }, function (err) {
+    return next(err);
+  })["catch"](function (err) {
+    return next(err);
+  });
+}).post(function (req, res, next) {
+  res.statusCode = 403;
+  res.end('POST operation not supported on /dishes/' + req.params.dishId + '/comments/' + req.params.commentId);
+}).put(function (req, res, next) {
+  Dishes.findById(req.params.dishId).then(function (dish) {
+    if (dish != null && dish.comments.id(req.params.commentId) != null) {
+      if (req.body.rating) {
+        dish.comments.id(req.params.commentId).rating = req.body.rating;
       }
-    }
-  }, null, null, [[0, 7]]);
-}).post(function (req, res) {
-  res.status(403).end("POST operation not supported on /dishes/".concat(req.params.dishId));
-}).put(function _callee5(req, res, next) {
-  var dish;
-  return regeneratorRuntime.async(function _callee5$(_context5) {
-    while (1) {
-      switch (_context5.prev = _context5.next) {
-        case 0:
-          _context5.prev = 0;
-          _context5.next = 3;
-          return regeneratorRuntime.awrap(Dishes.findByIdAndUpdate(req.params.dishId, {
-            $set: req.body
-          }, {
-            "new": true
-          }));
 
-        case 3:
-          dish = _context5.sent;
-          res.status(200).json(dish);
-          _context5.next = 10;
-          break;
-
-        case 7:
-          _context5.prev = 7;
-          _context5.t0 = _context5["catch"](0);
-          next(_context5.t0);
-
-        case 10:
-        case "end":
-          return _context5.stop();
+      if (req.body.comment) {
+        dish.comments.id(req.params.commentId).comment = req.body.comment;
       }
+
+      dish.save().then(function (dish) {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(dish);
+      }, function (err) {
+        return next(err);
+      });
+    } else if (dish == null) {
+      err = new Error('Dish ' + req.params.dishId + ' not found');
+      err.status = 404;
+      return next(err);
+    } else {
+      err = new Error('Comment ' + req.params.commentId + ' not found');
+      err.status = 404;
+      return next(err);
     }
-  }, null, null, [[0, 7]]);
-})["delete"](function _callee6(req, res, next) {
-  var resp;
-  return regeneratorRuntime.async(function _callee6$(_context6) {
-    while (1) {
-      switch (_context6.prev = _context6.next) {
-        case 0:
-          _context6.prev = 0;
-          _context6.next = 3;
-          return regeneratorRuntime.awrap(Dishes.findByIdAndDelete(req.params.dishId));
-
-        case 3:
-          resp = _context6.sent;
-          res.status(200).json(resp);
-          _context6.next = 10;
-          break;
-
-        case 7:
-          _context6.prev = 7;
-          _context6.t0 = _context6["catch"](0);
-          next(_context6.t0);
-
-        case 10:
-        case "end":
-          return _context6.stop();
-      }
+  }, function (err) {
+    return next(err);
+  })["catch"](function (err) {
+    return next(err);
+  });
+})["delete"](function (req, res, next) {
+  Dishes.findById(req.params.dishId).then(function (dish) {
+    if (dish != null && dish.comments.id(req.params.commentId) != null) {
+      dish.comments.id(req.params.commentId).remove();
+      dish.save().then(function (dish) {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(dish);
+      }, function (err) {
+        return next(err);
+      });
+    } else if (dish == null) {
+      err = new Error('Dish ' + req.params.dishId + ' not found');
+      err.status = 404;
+      return next(err);
+    } else {
+      err = new Error('Comment ' + req.params.commentId + ' not found');
+      err.status = 404;
+      return next(err);
     }
-  }, null, null, [[0, 7]]);
+  }, function (err) {
+    return next(err);
+  })["catch"](function (err) {
+    return next(err);
+  });
 });
 module.exports = dishRouter;
 //# sourceMappingURL=dishRouter.dev.js.map
