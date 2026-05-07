@@ -40,35 +40,50 @@ app.use(express.json());
 app.use(express.urlencoded({
   extended: false
 }));
-app.use(cookieParser());
+app.use(cookieParser('12345-67890-09876-54321'));
 
 function auth(req, res, next) {
-  console.log(req.headers);
-  var authHeader = req.headers.authorization;
+  if (!req.signedCookies.user) {
+    var authHeader = req.headers.authorization;
 
-  if (!authHeader) {
-    var err = new Error('You are not authenticated!');
-    res.setHeader('WWW-Authenticate', 'Basic');
-    err.status = 401;
-    next(err);
-    return;
-  }
+    if (!authHeader) {
+      var err = new Error('You are not authenticated!');
+      res.setHeader('WWW-Authenticate', 'Basic');
+      err.status = 401;
+      next(err);
+      return;
+    }
 
-  var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-  var user = auth[0];
-  var pass = auth[1];
+    var _auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
 
-  if (user == 'admin' && pass == 'password') {
-    next(); // authorized
+    var user = _auth[0];
+    var pass = _auth[1];
+
+    if (user == 'admin' && pass == 'password') {
+      res.cookie('user', 'admin', {
+        signed: true
+      });
+      next(); // authorized
+    } else {
+      var _err = new Error('You are not authenticated!');
+
+      res.setHeader('WWW-Authenticate', 'Basic');
+      _err.status = 401;
+      next(_err);
+    }
   } else {
-    var _err = new Error('You are not authenticated!');
+    if (req.signedCookies.user === 'admin') {
+      next();
+    } else {
+      var _err2 = new Error('You are not authenticated!');
 
-    res.setHeader('WWW-Authenticate', 'Basic');
-    _err.status = 401;
-    next(_err);
+      _err2.status = 401;
+      next(_err2);
+    }
   }
 }
 
+app.use(auth);
 app.use(express["static"](path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
