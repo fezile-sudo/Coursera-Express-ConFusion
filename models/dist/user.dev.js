@@ -3,6 +3,9 @@
 var mongoose = require('mongoose');
 
 var Schema = mongoose.Schema;
+
+var passportLocalMongoose = require('passport-local-mongoose');
+
 var User = new Schema({
   username: {
     type: String,
@@ -18,5 +21,6 @@ var User = new Schema({
     "default": false
   }
 });
+User.plugin(passportLocalMongoose);
 module.exports = mongoose.model('User', User);
 //# sourceMappingURL=user.dev.js.map
